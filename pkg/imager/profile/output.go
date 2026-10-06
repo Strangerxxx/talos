@@ -5,6 +5,10 @@
 package profile
 
 import (
+	"errors"
+	"fmt"
+	"os"
+
 	"github.com/siderolabs/talos/pkg/machinery/imager/imageropts"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
@@ -53,6 +57,44 @@ type ImageOptions struct {
 	//
 	// If not set, it defaults to if-safe. Only used when SecureBoot is enabled.
 	SDBootEnrollKeys SDBootEnrollKeys `yaml:"sdBootEnrollKeys,omitempty"`
+	// OVFTemplate replaces the built-in OVF descriptor template of the 'ova' disk format.
+	OVFTemplate *OVFTemplate `yaml:"ovfTemplate,omitempty"`
+}
+
+// OVFTemplate is a text/template of the OVF descriptor, set either inline or as a file.
+//
+// The built-in template is pkg/imager/ova/disk.ovf.tmpl.
+//
+// Template variables:
+//   - .VMDK - name of the disk file
+//   - .Size - size of the disk file (bytes)
+//   - .Capacity - capacity of the disk (MiB)
+//   - .Arch - architecture of the image: amd64 or arm64
+//   - .SecureBootCertificateHex - DER SecureBoot signing certificate in hex, empty without SecureBoot
+type OVFTemplate struct {
+	// Value is the template.
+	Value string `yaml:"value,omitempty"`
+	// Path is the path to the template file.
+	//
+	// If Path is set, Value is ignored.
+	Path string `yaml:"path,omitempty"`
+}
+
+// Contents returns the template.
+func (t *OVFTemplate) Contents() (string, error) {
+	switch {
+	case t.Path != "":
+		contents, err := os.ReadFile(t.Path)
+		if err != nil {
+			return "", fmt.Errorf("failed to read OVF template: %w", err)
+		}
+
+		return string(contents), nil
+	case t.Value != "":
+		return t.Value, nil
+	default:
+		return "", errors.New("ovfTemplate requires value or path")
+	}
 }
 
 // ISOOptions describes options for the 'iso' output.

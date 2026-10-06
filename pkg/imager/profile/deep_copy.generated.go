@@ -46,6 +46,10 @@ func (o Profile) DeepCopy() Profile {
 	if o.Output.ImageOptions != nil {
 		cp.Output.ImageOptions = new(ImageOptions)
 		*cp.Output.ImageOptions = *o.Output.ImageOptions
+		if o.Output.ImageOptions.OVFTemplate != nil {
+			cp.Output.ImageOptions.OVFTemplate = new(OVFTemplate)
+			*cp.Output.ImageOptions.OVFTemplate = *o.Output.ImageOptions.OVFTemplate
+		}
 	}
 	if o.Output.ISOOptions != nil {
 		cp.Output.ISOOptions = new(ISOOptions)
