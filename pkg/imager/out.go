@@ -264,9 +264,24 @@ func (i *Imager) outImage(ctx context.Context, path string, report *reporter.Rep
 			return xerrors.NewTaggedf[DependencyTag]("%w", err)
 		}
 	case profile.DiskFormatOVA:
-		scratchPath := filepath.Join(i.tempDir, "ova")
+		var ovfTemplate string
 
-		if err := ova.CreateOVAFromRAW(ctx, path, i.prof.Arch, scratchPath, i.prof.Output.ImageOptions.DiskSize, printf); err != nil {
+		if i.prof.Output.ImageOptions.OVFTemplate != nil {
+			var err error
+
+			if ovfTemplate, err = i.prof.Output.ImageOptions.OVFTemplate.Contents(); err != nil {
+				return xerrors.NewTaggedf[IOTag]("%w", err)
+			}
+		}
+
+		if err := ova.CreateOVAFromRAW(ctx, ova.Options{
+			OutPath:               path,
+			ScratchPath:           filepath.Join(i.tempDir, "ova"),
+			Arch:                  i.prof.Arch,
+			DiskSize:              i.prof.Output.ImageOptions.DiskSize,
+			OVFTemplate:           ovfTemplate,
+			SecureBootCertificate: i.secureBootCertificate,
+		}, printf); err != nil {
 			return xerrors.NewTaggedf[DependencyTag]("%w", err)
 		}
 	case profile.DiskFormatUnknown:

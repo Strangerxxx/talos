@@ -51,6 +51,9 @@ type Imager struct {
 	sdBootPath string
 	ukiPath    string
 
+	// secureBootCertificate is the DER SecureBoot signing certificate.
+	secureBootCertificate []byte
+
 	// xattrsMap is used to store paths and their corresponding SELinux xattr values during extraction of extensions.
 	xattrsMap map[string]string
 }
@@ -494,6 +497,8 @@ func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error 
 
 		builder.SecureBootSigner = securebootSigner
 		builder.PCRSigner = pcrSigner
+
+		i.secureBootCertificate = securebootSigner.Certificate().Raw
 
 		buildFunc = builder.BuildSigned
 	}
